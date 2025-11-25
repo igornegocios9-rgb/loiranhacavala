@@ -5,13 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecionando...</title>
     <script src="https://cdn.utmify.com.br/scripts/utms/latest.js" async defer></script>
+    
+    <script>
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1199039735620465'); // Seu ID do Pixel
+        fbq('track', 'PageView');
+    </script>
+
     <style>body{background:#000;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;}</style>
 </head>
 <body>
     <h3>Aguarde... Conectando ao Telegram 🚀</h3>
     <script>
-        // 🚨 COLOQUE AQUI SUA URL DO N8N (WORKFLOW NOVO)
+        // 🚨 CONFIRA SE ESTA URL ESTÁ CERTA
+        // Se mudou o workflow de encurtamento, pegue a URL de Produção nova no n8n
         const N8N_URL = "https://n8n.quizspotiifyoficiial.shop/webhook/save-tracking"; 
+        
         const BOT_USER = "juliapriv1_bot";
 
         async function go() {
@@ -22,29 +31,38 @@
             params.forEach((val, key) => { data[key] = val });
 
             // Se não tiver UTM, redireciona orgânico
+            // Se quiser testar, adicione ?utm_source=teste na URL
             if (!data.utm_source && !data.fbclid) {
+                console.log("Sem dados de rastreio, redirecionando orgânico");
                 window.location.href = `https://t.me/${BOT_USER}?start=organic`;
                 return;
             }
 
             try {
+                console.log("Enviando para n8n...");
                 // Manda pro N8N e espera o código
                 const req = await fetch(N8N_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
+                
+                if (!req.ok) throw new Error(`Erro HTTP: ${req.status}`);
+
                 const res = await req.json();
+                console.log("Resposta n8n:", res);
                 
                 if (res.code) {
                     // Redireciona com o código curto!
                     window.location.href = `https://t.me/${BOT_USER}?start=${res.code}`;
                 } else {
-                    throw new Error("Sem código");
+                    throw new Error("Sem código na resposta");
                 }
             } catch (e) {
-                // Fallback se der erro
-                window.location.href = `https://t.me/${BOT_USER}?start=fallback_error`;
+                console.error("ERRO DETALHADO:", e);
+                const erroMsg = encodeURIComponent(e.message || "desconhecido");
+                // Redireciona com o erro para você ver no Telegram
+                window.location.href = `https://t.me/${BOT_USER}?start=fallback_error_${erroMsg}`;
             }
         }
         go();
